@@ -3,5 +3,4 @@ my_env/
 data/
 .ipy*
 __pycache__/
-Model/
 *.png
