@@ -14,7 +14,7 @@ import pickle
 
 
 numeric_size = 3
-num_of_patients = 15000
+num_of_patients = 20000
 
 def get_rand_visit_codes():
     #num_of_codes_in_visit = randint(1,5)

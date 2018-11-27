@@ -4,3 +4,4 @@ data/
 .ipy*
 __pycache__/
 *.png
+Model/log.txt
