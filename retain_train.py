@@ -304,16 +304,16 @@ def train_model(model, data_train, y_train, data_test, y_test, ARGS):
     print(model.output.op.name)                        
     saver = tf.train.Saver()
     saver.save(K.get_session(), 'Model/keras_model.ckpt')  
-    output_node_names =[n.name for n in tf.get_default_graph().as_graph_def().node]
+    output_node_names =[n.name for n in K.get_session().graph_def.node]
+    output_node_names2 =[n.name for n in K.get_session().graph_def.node]
     #print("output_node_names: "+str(output_node_names))
+    gd = K.get_session().graph_def
     frozen_graph_def = tf.graph_util.convert_variables_to_constants(
         K.get_session(),
-        K.get_session().graph_def,
+        gd,
         output_node_names)
     with open('Model/output_graph.pb', 'wb') as f:
       f.write(frozen_graph_def.SerializeToString())
-    output_node_names2 =[n.name for n in K.get_session().graph_def.node]
-    print("output_node_names2: "+str(output_node_names2))
 
 def main(ARGS):
     """Main function"""
