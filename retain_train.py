@@ -231,6 +231,7 @@ def model_create(ARGS):
     K.clear_session()
     config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
     config.gpu_options.allow_growth = True
+    global tfsess
     tfsess = tf.Session(config=config)
     K.set_session(tfsess)
     #If there are multiple GPUs set up a multi-gpu model
@@ -300,6 +301,19 @@ def train_model(model, data_train, y_train, data_test, y_test, ARGS):
     model.fit_generator(generator=train_generator, epochs=ARGS.epochs,
                         max_queue_size=15, use_multiprocessing=True,
                         callbacks=[checkpoint, log], verbose=1, workers=3, initial_epoch=0)
+    print(model.output.op.name)                        
+    saver = tf.train.Saver()
+    saver.save(K.get_session(), 'Model/keras_model.ckpt')  
+    output_node_names =[n.name for n in tf.get_default_graph().as_graph_def().node]
+    #print("output_node_names: "+str(output_node_names))
+    frozen_graph_def = tf.graph_util.convert_variables_to_constants(
+        K.get_session(),
+        K.get_session().graph_def,
+        output_node_names)
+    with open('Model/output_graph.pb', 'wb') as f:
+      f.write(frozen_graph_def.SerializeToString())
+    output_node_names2 =[n.name for n in K.get_session().graph_def.node]
+    print("output_node_names2: "+str(output_node_names2))
 
 def main(ARGS):
     """Main function"""
