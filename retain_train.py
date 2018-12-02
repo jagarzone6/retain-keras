@@ -14,7 +14,9 @@ from keras.regularizers import l2
 from keras.constraints import non_neg, Constraint
 from keras_exp.multigpu import get_available_gpus, make_parallel
 from sklearn.metrics import roc_auc_score, average_precision_score, precision_recall_curve
-
+from tensorflow.python.framework import graph_io
+from tensorflow.python.training import saver as saver_lib
+from tensorflow.core.protobuf import saver_pb2
 
 class SequenceBuilder(Sequence):
     """Generate Batches of data"""
@@ -301,19 +303,31 @@ def train_model(model, data_train, y_train, data_test, y_test, ARGS):
     model.fit_generator(generator=train_generator, epochs=ARGS.epochs,
                         max_queue_size=15, use_multiprocessing=True,
                         callbacks=[checkpoint, log], verbose=1, workers=3, initial_epoch=0)
-    print(model.output.op.name)                        
-    saver = tf.train.Saver()
-    saver.save(K.get_session(), 'Model/keras_model.ckpt')  
-    output_node_names =[n.name for n in K.get_session().graph_def.node]
-    output_node_names2 =[n.name for n in K.get_session().graph_def.node]
-    #print("output_node_names: "+str(output_node_names))
-    gd = K.get_session().graph_def
-    frozen_graph_def = tf.graph_util.convert_variables_to_constants(
+    print(model.output.op.name)
+    checkpoint_prefix = os.path.join('Model/', "saved_checkpoint")
+    checkpoint_state_name = "checkpoint_state"
+    saver_write_version=saver_pb2.SaverDef.V2
+    saver = saver_lib.Saver(write_version=saver_write_version)
+    checkpoint_path = saver.save(
         K.get_session(),
-        gd,
-        output_node_names)
-    with open('Model/output_graph.pb', 'wb') as f:
-      f.write(frozen_graph_def.SerializeToString())
+        checkpoint_prefix,
+        global_step=0,
+        latest_filename=checkpoint_state_name)
+    print(checkpoint_path)
+    #saver = tf.train.Saver()
+    #saver.save(K.get_session(), 'Model/keras_model.ckpt')  
+    output_node_names =[n.name for n in K.get_session().graph_def.node]
+    #print("output_node_names: "+str(output_node_names))
+    print("print(model.outputs): " +str(model.outputs))
+    #gd = K.get_session().graph_def
+    #gd = K.get_session().get_default_graph().as_graph_def()
+    #frozen_graph_def = tf.graph_util.convert_variables_to_constants(
+    #    K.get_session(),
+    #    gd,
+    #    output_node_names)
+    #with open('Model/output_graph.pb', 'wb') as f:
+    #  f.write(frozen_graph_def.SerializeToString())
+    graph_io.write_graph(K.get_session().graph, 'Model/', 'input_graph.pb')
 
 def main(ARGS):
     """Main function"""
